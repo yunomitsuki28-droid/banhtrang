@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bánh Tráng Trộn Sinh Tồn — Squad Management Map (Tycoon Mode)</title>
+  <style>
+    :root {
+      --paper-bg: #f4ebd0;
+      --paper-card: #fffaf0;
+      --ink: #1e1b18;
+      --accent-red: #dc2626;
+      --accent-amber: #d97706;
+      --accent-green: #15803d;
+      --accent-blue: #1d4ed8;
+      --accent-purple: #7e22ce;
+      --muted: #5c5346;
+      --shadow: 4px 4px 0px #1e1b18;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: #2b2620;
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 12px;
+    }
+
+    .tycoon-shell {
+      width: 100%;
+      max-width: 1440px;
+      background: var(--paper-bg);
+      background-image:
+        radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.45) 0%, transparent 45%),
+        radial-gradient(circle at 82% 76%, rgba(196, 174, 132, 0.28) 0%, transparent 50%),
+        repeating-linear-gradient(135deg, rgba(30, 27, 24, 0.02) 0px, rgba(30, 27, 24, 0.02) 2px, transparent 2px, transparent 10px);
+      border: 3px solid var(--ink);
+      border-radius: 14px;
+      box-shadow: 8px 8px 0px #0f0d0b;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    /* 1. TOP HUD */
+    .top-hud {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--paper-card);
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      padding: 10px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .hud-stats {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stat-box {
+      background: #fef3c7;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      padding: 6px 12px;
+      min-width: 150px;
+    }
+
+    .stat-box.income {
+      background: #dcfce7;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 1.15rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .heat-box {
+      background: #fee2e2;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      padding: 6px 12px;
+      min-width: 230px;
+    }
+
+    .heat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 11px;
+      background: #ffffff;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.25s ease, background-color 0.25s ease;
+    }
+
+    /* MAIN 3-COLUMN WORKSPACE */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 290px;
+      gap: 12px;
+      min-height: 540px;
+    }
+
+    .panel {
+      background: var(--paper-card);
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      background: #e9dec0;
+      border-bottom: 3px solid var(--ink);
+      padding: 9px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 900;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* 3. LEFT ROSTER PANEL */
+    .roster-list {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .squad-card {
+      background: #ffffff;
+      border: 2.5px solid var(--ink);
+      border-radius: 8px;
+      padding: 10px;
+      cursor: grab;
+      box-shadow: 3px 3px 0px var(--ink);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+      user-select: none;
+    }
+
+    .squad-card:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px var(--ink);
+    }
+
+    .squad-card:active {
+      cursor: grabbing;
+    }
+
+    .squad-card.selected {
+      outline: 3px solid var(--accent-blue);
+      background: #eff6ff;
+    }
+
+    .squad-card.arrested {
+      background: #fef2f2;
+      border-color: var(--accent-red);
+      cursor: not-allowed;
+      opacity: 0.88;
+    }
+
+    .squad-card.crisis {
+      background: #fffbeb;
+      border-color: var(--accent-red);
+      animation: pulseAlert 0.7s infinite alternate;
+    }
+
+    .squad-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .squad-name {
+      font-weight: 900;
+      font-size: 0.92rem;
+    }
+
+    .status-tag {
+      font-size: 0.68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border: 1.5px solid var(--ink);
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .status-IDLE { background: #e5e7eb; color: #1f2937; }
+    .status-DEPLOYED { background: #bbf7d0; color: #14532d; }
+    .status-CRISIS { background: #fecaca; color: #991b1b; }
+    .status-ARRESTED { background: #1e1b18; color: #fca5a5; }
+
+    .squad-meta {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 7px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .stamina-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stamina-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      min-width: 54px;
+    }
+
+    .stamina-pct {
+      font-size: 0.72rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      min-width: 34px;
+      text-align: right;
+    }
+
+    /* 2. CENTER MAP AREA */
+    .map-panel {
+      position: relative;
+    }
+
+    .tactical-map {
+      position: relative;
+      flex: 1;
+      min-height: 490px;
+      background-color: #ebd9b4;
+      background-image:
+        radial-gradient(circle at 30% 35%, rgba(255, 248, 225, 0.65) 0%, transparent 55%),
+        radial-gradient(circle at 75% 65%, rgba(180, 146, 94, 0.25) 0%, transparent 50%),
+        linear-gradient(to right, rgba(30, 27, 24, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(30, 27, 24, 0.06) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+      overflow: hidden;
+    }
+
+    .map-svg-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .map-legend {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      background: rgba(255, 250, 240, 0.92);
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    .map-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 196px;
+      background: #fffdf7;
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      padding: 8px 10px;
+      box-shadow: 4px 4px 0px var(--ink);
+      transition: transform 0.14s ease, background-color 0.15s ease, border-color 0.15s ease;
+      cursor: pointer;
+    }
+
+    .map-node:hover {
+      transform: translate(-50%, -52%) scale(1.02);
+      z-index: 4;
+    }
+
+    .map-node.drag-over {
+      background: #dbeafe;
+      border-color: var(--accent-blue);
+      transform: translate(-50%, -50%) scale(1.06);
+      z-index: 5;
+    }
+
+    .map-node.crisis-flash {
+      background: #fee2e2;
+      border-color: var(--accent-red);
+      animation: nodeCrisisFlash 0.45s infinite alternate;
+      z-index: 6;
+    }
+
+    .node-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .node-title {
+      font-size: 0.85rem;
+      font-weight: 900;
+    }
+
+    .node-rate {
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: var(--accent-green);
+      white-space: nowrap;
+    }
+
+    .node-metrics {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .node-slot {
+      border: 2px dashed #8c7e6a;
+      border-radius: 6px;
+      padding: 5px 7px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-align: center;
+      background: #f8f1df;
+    }
+
+    .node-slot.occupied {
+      border-style: solid;
+      border-color: var(--ink);
+      background: #dcfce7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .node-slot.crisis {
+      border-style: solid;
+      border-color: var(--accent-red);
+      background: #fecaca;
+      color: #7f1d1d;
+    }
+
+    .btn-mini {
+      border: 1.5px solid var(--ink);
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 0.68rem;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-mini:hover {
+      background: #fde68a;
+    }
+
+    .crisis-banner {
+      margin-top: 5px;
+      background: var(--accent-red);
+      color: #ffffff;
+      font-size: 0.7rem;
+      font-weight: 900;
+      text-align: center;
+      padding: 3px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+    }
+
+    /* 4. RIGHT EVENT FEED */
+    .feed-list {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      flex: 1;
+      max-height: 490px;
+    }
+
+    .feed-item {
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      padding: 7px 9px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.35;
+      background: #ffffff;
+    }
+
+    .feed-item.profit { background: #f0fdf4; border-color: #166534; }
+    .feed-item.crisis { background: #fef2f2; border-color: #b91c1c; }
+    .feed-item.system { background: #eff6ff; border-color: #1e40af; }
+
+    .feed-time {
+      font-size: 0.66rem;
+      font-weight: 900;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* 5. BOTTOM ACTION BAR */
+    .bottom-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--paper-card);
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .action-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-action {
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      padding: 9px 15px;
+      border: 2.5px solid var(--ink);
+      border-radius: 8px;
+      box-shadow: 3px 3px 0px var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .btn-action:hover:not(:disabled) {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px var(--ink);
+    }
+
+    .btn-action:active:not(:disabled) {
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0px var(--ink);
+    }
+
+    .btn-action:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-upgrade { background: #fde047; color: var(--ink); }
+    .btn-policy { background: #bfdbfe; color: var(--ink); }
+    .btn-bail { background: #fca5a5; color: var(--ink); }
+
+    .policy-note {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    /* MODALS */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 13, 11, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--paper-card);
+      border: 4px solid var(--ink);
+      border-radius: 12px;
+      box-shadow: 8px 8px 0px #000000;
+      padding: 18px;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--accent-red);
+    }
+
+    .modal-title.policy-title {
+      color: var(--accent-blue);
+    }
+
+    .modal-body {
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    .modal-timer {
+      background: #fee2e2;
+      border: 2px solid var(--accent-red);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #991b1b;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .policy-option {
+      text-align: left;
+      background: #ffffff;
+      border: 2.5px solid var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .policy-option:hover {
+      background: #eff6ff;
+    }
+
+    .policy-option.active {
+      background: #dbeafe;
+      border-color: var(--accent-blue);
+    }
+
+    @keyframes pulseAlert {
+      from { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
+      to { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.1); }
+    }
+
+    @keyframes nodeCrisisFlash {
+      from { background-color: #fee2e2; transform: translate(-50%, -50%) scale(1); }
+      to { background-color: #fca5a5; transform: translate(-50%, -50%) scale(1.05); }
+    }
+
+    @media (max-width: 1080px) {
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+      .tactical-map {
+        min-height: 440px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="tycoon-shell">
+    <!-- 1. TOP HUD -->
+    <header class="top-hud">
+      <div class="brand-block">
+        <div class="brand-title">Bản Đồ Quản Lý Đội Nhóm — Tycoon Mode</div>
+        <div class="brand-sub">Kéo thả 4 Tổ (16 nhân sự) vào 5 điểm nóng Sài Gòn • Tự thu tiền & xử lý truy quét</div>
+      </div>
+      <div class="hud-stats">
+        <div class="stat-box">
+          <div class="stat-label">Tổng Ngân Quỹ</div>
+          <div class="stat-value" id="hudMoney">150,000 VND</div>
+        </div>
+        <div class="stat-box income">
+          <div class="stat-label">Thu Nhập Thụ Động</div>
+          <div class="stat-value" id="hudIncome">+0 VND/s</div>
+        </div>
+        <div class="heat-box">
+          <div class="heat-header">
+            <span>Mức Độ Chú Ý (Heat)</span>
+            <span id="hudHeatText">18%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="hudHeatBar" style="width: 18%; background: #f59e0b;"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN 3-ZONE WORKSPACE -->
+    <main class="workspace-grid">
+      <!-- 3. LEFT ROSTER PANEL -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>Đội Ngũ (4 Tổ • 16 Người)</span>
+          <span id="rosterSummary">0/4 Đang Chạy</span>
+        </div>
+        <div class="roster-list" id="rosterList"></div>
+      </section>
+
+      <!-- 2. CENTER MAP AREA -->
+      <section class="panel map-panel">
+        <div class="panel-header">
+          <span>Bản Đồ Chiến Thuật TP.HCM (5 Điểm Nóng)</span>
+          <span style="font-size: 0.74rem; color: #5c5346;">Kéo thẻ Tổ hoặc bấm chọn rồi bấm Điểm Nóng</span>
+        </div>
+        <div class="tactical-map" id="tacticalMap">
+          <svg class="map-svg-layer" viewBox="0 0 1000 600" preserveAspectRatio="none">
+            <!-- Stylized Saigon River curve & tactical roads -->
+            <path d="M -20 430 Q 260 390 480 450 T 1020 380" fill="none" stroke="#93c5fd" stroke-width="26" opacity="0.55" />
+            <path d="M 180 120 L 490 280 L 800 140" fill="none" stroke="#8c7e6a" stroke-width="4" stroke-dasharray="10 8" opacity="0.65" />
+            <path d="M 240 460 L 490 280 L 760 450" fill="none" stroke="#8c7e6a" stroke-width="4" stroke-dasharray="10 8" opacity="0.65" />
+            <circle cx="490" cy="280" r="36" fill="none" stroke="#8c7e6a" stroke-width="3" stroke-dasharray="6 5" opacity="0.6" />
+          </svg>
+          <!-- 5 absolute-positioned Nodes injected by JS -->
+          <div class="map-legend">
+            Mẹo: Nhấp vào điểm nhấp nháy ĐỎ trong 5 giây để xử lý Trật Tự Đô Thị!
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. RIGHT EVENT FEED -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>Nhật Ký Chiến Trường</span>
+          <span style="font-size: 0.72rem; color: #b91c1c;">LIVE</span>
+        </div>
+        <div class="feed-list" id="eventFeed"></div>
+      </section>
+    </main>
+
+    <!-- 5. BOTTOM ACTION BAR -->
+    <footer class="bottom-bar">
+      <div class="action-group">
+        <button class="btn-action btn-upgrade" id="btnUpgrade">Upgrades (Lv.1 • 80,000đ)</button>
+        <button class="btn-action btn-policy" id="btnPolicy">Policies (Chính Sách)</button>
+        <button class="btn-action btn-bail" id="btnBail" disabled>Bail Out (Bảo Lãnh: 0 Tổ)</button>
+      </div>
+      <div class="policy-note" id="activePolicyLabel">Chính sách hiện tại: Hoạt Động Bình Thường</div>
+    </footer>
+  </div>
+
+  <!-- CRISIS MODAL -->
+  <div class="modal-backdrop" id="crisisModal">
+    <div class="modal-card">
+      <div class="modal-title" id="crisisModalTitle">CẢNH BÁO TRUY QUÉT!</div>
+      <div class="modal-body" id="crisisModalBody"></div>
+      <div class="modal-timer" id="crisisModalTimer">Còn 5.0s trước khi bị bắt giữ!</div>
+      <div class="modal-actions">
+        <button class="btn-action btn-upgrade" id="btnBribe">Pay Bribe (Lót Tay 25,000 VND • Giữ Điểm Bán)</button>
+        <button class="btn-action btn-policy" id="btnFlee">Flee (Bỏ Chạy • Rút Tổ Về Nghỉ, Không Mất Tiền)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POLICY MODAL -->
+  <div class="modal-backdrop" id="policyModal">
+    <div class="modal-card">
+      <div class="modal-title policy-title">Chọn Chính Sách Vận Hành</div>
+      <div class="modal-body">Điều chỉnh chiến lược toàn mạng lưới 16 nhân sự:</div>
+      <div class="modal-actions" id="policyOptions"></div>
+      <div style="margin-top: 12px; text-align: right;">
+        <button class="btn-action" style="background: #e5e7eb;" id="btnClosePolicy">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const POLICIES = {
+        NONE: {
+          id: 'NONE',
+          name: 'Hoạt Động Bình Thường',
+          desc: 'Thu nhập x1.0 • Hao thể lực chuẩn • Heat cân bằng.',
+          incomeMult: 1.0,
+          staminaMult: 1.0,
+          heatDelta: 0
+        },
+        OVERDRIVE: {
+          id: 'OVERDRIVE',
+          name: 'Tăng Ca Bùng Nổ',
+          desc: 'Thu nhập +35% • Hao thể lực nhanh hơn 40% • Tăng Heat.',
+          incomeMult: 1.35,
+          staminaMult: 1.4,
+          heatDelta: 1.2
+        },
+        BRIBE_PATROL: {
+          id: 'BRIBE_PATROL',
+          name: 'Ngoại Giao Mềm',
+          desc: 'Giảm Heat liên tục (-1.8%/s) • Thu nhập giảm 15%.',
+          incomeMult: 0.85,
+          staminaMult: 1.0,
+          heatDelta: -1.8
+        },
+        TEA_BREAK: {
+          id: 'TEA_BREAK',
+          name: 'Trà Tắc Giải Nhiệt',
+          desc: 'Giảm 40% hao thể lực & hồi nhanh khi nghỉ • Thu nhập -10%.',
+          incomeMult: 0.9,
+          staminaMult: 0.6,
+          heatDelta: -0.3
+        }
+      };
+
+      const state = {
+        money: 150000,
+        heat: 18,
+        upgradeLevel: 1,
+        policy: 'NONE',
+        selectedSquadId: null,
+        draggingSquadId: null,
+        activeCrisisNodeId: null,
+        nodes: [
+          {
+            id: 'cong-vien',
+            name: 'Công Viên 23/9',
+            traffic: 'Trung Bình',
+            risk: 'Thấp',
+            profitPerSec: 3200,
+            heatPerSec: 0.4,
+            x: 21,
+            y: 25,
+            squadId: 'sq-1',
+            crisis: null
+          },
+          {
+            id: 'hang-xanh',
+            name: 'Ngã Tư Hàng Xanh',
+            traffic: 'Rất Cao',
+            risk: 'Cao',
+            profitPerSec: 5400,
+            heatPerSec: 1.1,
+            x: 77,
+            y: 24,
+            squadId: null,
+            crisis: null
+          },
+          {
+            id: 'ho-con-rua',
+            name: 'Hồ Con Rùa',
+            traffic: 'Đông Sinh Viên',
+            risk: 'Trung Bình',
+            profitPerSec: 4600,
+            heatPerSec: 0.7,
+            x: 50,
+            y: 48,
+            squadId: 'sq-2',
+            crisis: null
+          },
+          {
+            id: 'ben-thanh',
+            name: 'Chợ Bến Thành',
+            traffic: 'Khách Du Lịch',
+            risk: 'Trung Bình',
+            profitPerSec: 5100,
+            heatPerSec: 0.9,
+            x: 24,
+            y: 74,
+            squadId: null,
+            crisis: null
+          },
+          {
+            id: 'nguyen-hue',
+            name: 'Phố Đi Bộ Nguyễn Huệ',
+            traffic: 'Siêu Đông',
+            risk: 'Rất Cao',
+            profitPerSec: 7200,
+            heatPerSec: 1.5,
+            x: 75,
+            y: 74,
+            squadId: null,
+            crisis: null
+          }
+        ],
+        squads: [
+          { id: 'sq-1', name: 'Tổ 1 • Cơ Động', members: 4, status: 'DEPLOYED', stamina: 92, nodeId: 'cong-vien' },
+          { id: 'sq-2', name: 'Tổ 2 • Chảo Lửa', members: 4, status: 'DEPLOYED', stamina: 86, nodeId: 'ho-con-rua' },
+          { id: 'sq-3', name: 'Tổ 3 • Ship Tốc Độ', members: 4, status: 'IDLE', stamina: 100, nodeId: null },
+          { id: 'sq-4', name: 'Tổ 4 • Ngoại Giao', members: 4, status: 'IDLE', stamina: 100, nodeId: null }
+        ],
+        feed: []
+      };
+
+      const elMoney = document.getElementById('hudMoney');
+      const elIncome = document.getElementById('hudIncome');
+      const elHeatText = document.getElementById('hudHeatText');
+      const elHeatBar = document.getElementById('hudHeatBar');
+      const elRosterSummary = document.getElementById('rosterSummary');
+      const elRosterList = document.getElementById('rosterList');
+      const elTacticalMap = document.getElementById('tacticalMap');
+      const elEventFeed = document.getElementById('eventFeed');
+      const elBtnUpgrade = document.getElementById('btnUpgrade');
+      const elBtnPolicy = document.getElementById('btnPolicy');
+      const elBtnBail = document.getElementById('btnBail');
+      const elActivePolicyLabel = document.getElementById('activePolicyLabel');
+
+      const elCrisisModal = document.getElementById('crisisModal');
+      const elCrisisTitle = document.getElementById('crisisModalTitle');
+      const elCrisisBody = document.getElementById('crisisModalBody');
+      const elCrisisTimer = document.getElementById('crisisModalTimer');
+      const elBtnBribe = document.getElementById('btnBribe');
+      const elBtnFlee = document.getElementById('btnFlee');
+
+      const elPolicyModal = document.getElementById('policyModal');
+      const elPolicyOptions = document.getElementById('policyOptions');
+      const elBtnClosePolicy = document.getElementById('btnClosePolicy');
+
+      function fmtMoney(num) {
+        return Math.round(num).toLocaleString('vi-VN') + ' VND';
+      }
+
+      function addFeed(message, type = 'system') {
+        const now = new Date();
+        const time = now.toTimeString().slice(0, 8);
+        state.feed.unshift({ id: Date.now() + Math.random(), time, message, type });
+        if (state.feed.length > 25) state.feed.length = 25;
+        renderFeed();
+      }
+
+      function getUpgradeCost() {
+        return 80000 * state.upgradeLevel;
+      }
+
+      function getPassiveIncomePerSec() {
+        const policy = POLICIES[state.policy];
+        const upgradeMult = 1 + (state.upgradeLevel - 1) * 0.25;
+        let total = 0;
+        state.nodes.forEach((node) => {
+          if (!node.squadId || node.crisis) return;
+          const sq = state.squads.find((s) => s.id === node.squadId);
+          if (sq && sq.status === 'DEPLOYED') {
+            total += node.profitPerSec * upgradeMult * policy.incomeMult;
+          }
+        });
+        return Math.round(total);
+      }
+
+      function deploySquadToNode(squadId, targetNodeId) {
+        const squad = state.squads.find((s) => s.id === squadId);
+        const node = state.nodes.find((n) => n.id === targetNodeId);
+        if (!squad || !node) return;
+
+        if (squad.status === 'ARRESTED') {
+          addFeed(`${squad.name} đang bị tạm giữ! Hãy bấm "Bail Out" để bảo lãnh.`, 'crisis');
+          return;
+        }
+        if (squad.status === 'CRISIS' || node.crisis) {
+          addFeed(`Điểm ${node.name} đang có biến! Cần xử lý truy quét trước.`, 'crisis');
+          return;
+        }
+        if (squad.stamina < 15) {
+          addFeed(`${squad.name} quá mệt (<15% thể lực), hãy để nghỉ thêm!`, 'system');
+          return;
+        }
+
+        // Remove squad from previous node if deployed elsewhere
+        if (squad.nodeId) {
+          const prevNode = state.nodes.find((n) => n.id === squad.nodeId);
+          if (prevNode) prevNode.squadId = null;
+        }
+
+        // If target node had another squad, return that squad to Idle
+        if (node.squadId && node.squadId !== squad.id) {
+          const displaced = state.squads.find((s) => s.id === node.squadId);
+          if (displaced) {
+            displaced.nodeId = null;
+            displaced.status = 'IDLE';
+          }
+        }
+
+        node.squadId = squad.id;
+        squad.nodeId = node.id;
+        squad.status = 'DEPLOYED';
+        state.selectedSquadId = null;
+        addFeed(`${squad.name} đã chốt vị trí tại ${node.name} (+${fmtMoney(node.profitPerSec)}/s).`, 'profit');
+        renderAll();
+      }
+
+      function recallSquad(squadId) {
+        const squad = state.squads.find((s) => s.id === squadId);
+        if (!squad || squad.status === 'ARRESTED' || squad.status === 'CRISIS') return;
+        if (squad.nodeId) {
+          const node = state.nodes.find((n) => n.id === squad.nodeId);
+          if (node) node.squadId = null;
+        }
+        squad.nodeId = null;
+        squad.status = 'IDLE';
+        addFeed(`${squad.name} đã rút về hậu phương hồi phục thể lực.`, 'system');
+        renderAll();
+      }
+
+      function openCrisisModal(nodeId) {
+        const node = state.nodes.find((n) => n.id === nodeId);
+        if (!node || !node.crisis) return;
+        state.activeCrisisNodeId = nodeId;
+        const squad = state.squads.find((s) => s.id === node.squadId);
+        elCrisisTitle.textContent = `TRUY QUÉT TẠI ${node.name.toUpperCase()}!`;
+        elCrisisBody.textContent = `${squad ? squad.name : 'Đội bán hàng'} đang bị Trật Tự Đô Thị kiểm tra gắt gao! Quyết định nhanh hoặc cả tổ sẽ bị tạm giữ.`;
+        elCrisisTimer.textContent = `Còn ${node.crisis.remaining.toFixed(1)}s trước khi bị bắt giữ!`;
+        elBtnBribe.disabled = state.money < 25000;
+        elCrisisModal.classList.add('open');
+      }
+
+      function closeCrisisModal() {
+        state.activeCrisisNodeId = null;
+        elCrisisModal.classList.remove('open');
+      }
+
+      function resolveCrisis(choice) {
+        const node = state.nodes.find((n) => n.id === state.activeCrisisNodeId);
+        if (!node || !node.crisis) {
+          closeCrisisModal();
+          return;
+        }
+        const squad = state.squads.find((s) => s.id === node.squadId);
+        if (choice === 'BRIBE') {
+          if (state.money < 25000) return;
+          state.money -= 25000;
+          state.heat = Math.max(0, state.heat - 14);
+          node.crisis = null;
+          if (squad) squad.status = 'DEPLOYED';
+          addFeed(`Đã chi 25,000đ ngoại giao tại ${node.name}. ${squad ? squad.name : ''} tiếp tục hốt bạc!`, 'profit');
+        } else {
+          node.crisis = null;
+          node.squadId = null;
+          if (squad) {
+            squad.nodeId = null;
+            squad.status = 'IDLE';
+          }
+          state.heat = Math.max(0, state.heat - 6);
+          addFeed(`${squad ? squad.name : 'Tổ bán hàng'} đã tẩu thoát an toàn khỏi ${node.name}!`, 'system');
+        }
+        closeCrisisModal();
+        renderAll();
+      }
+
+      function renderHud() {
+        elMoney.textContent = fmtMoney(state.money);
+        elIncome.textContent = `+${fmtMoney(getPassiveIncomePerSec())}/s`;
+        const heatRounded = Math.round(state.heat);
+        elHeatText.textContent = `${heatRounded}%`;
+        elHeatBar.style.width = `${heatRounded}%`;
+        if (heatRounded >= 75) {
+          elHeatBar.style.backgroundColor = '#dc2626';
+        } else if (heatRounded >= 45) {
+          elHeatBar.style.backgroundColor = '#f59e0b';
+        } else {
+          elHeatBar.style.backgroundColor = '#16a34a';
+        }
+
+        const deployedCount = state.squads.filter((s) => s.status === 'DEPLOYED').length;
+        elRosterSummary.textContent = `${deployedCount}/4 Đang Chạy`;
+
+        const upCost = getUpgradeCost();
+        elBtnUpgrade.textContent = `Upgrades (Lv.${state.upgradeLevel} • ${upCost.toLocaleString('vi-VN')}đ)`;
+        elBtnUpgrade.disabled = state.money < upCost;
+
+        const arrestedCount = state.squads.filter((s) => s.status === 'ARRESTED').length;
+        const bailCost = arrestedCount * 40000;
+        elBtnBail.textContent = arrestedCount > 0
+          ? `Bail Out (${arrestedCount} Tổ • ${bailCost.toLocaleString('vi-VN')}đ)`
+          : 'Bail Out (Không Có Tổ Bị Bắt)';
+        elBtnBail.disabled = arrestedCount === 0 || state.money < bailCost;
+
+        elActivePolicyLabel.textContent = `Chính sách hiện tại: ${POLICIES[state.policy].name}`;
+      }
+
+      function renderRoster() {
+        elRosterList.innerHTML = '';
+        state.squads.forEach((sq) => {
+          const card = document.createElement('div');
+          const statusClass = sq.status.toLowerCase();
+          card.className = `squad-card ${statusClass} ${state.selectedSquadId === sq.id ? 'selected' : ''}`;
+          card.draggable = sq.status === 'IDLE' || sq.status === 'DEPLOYED';
+
+          const locNode = sq.nodeId ? state.nodes.find((n) => n.id === sq.nodeId) : null;
+          const locText = locNode ? `Tại: ${locNode.name}` : 'Đang chờ lệnh';
+          const stamColor = sq.stamina > 55 ? '#16a34a' : sq.stamina > 25 ? '#f59e0b' : '#dc2626';
+
+          card.innerHTML = `
+            <div class="squad-top">
+              <span class="squad-name">${sq.name}</span>
+              <span class="status-tag status-${sq.status}">${sq.status}</span>
+            </div>
+            <div class="squad-meta">
+              <span>${sq.members} nhân sự</span>
+              <span>${locText}</span>
+            </div>
+            <div class="stamina-row">
+              <span class="stamina-label">Thể lực</span>
+              <div class="progress-track" style="flex:1;">
+                <div class="progress-fill" style="width:${Math.round(sq.stamina)}%; background:${stamColor};"></div>
+              </div>
+              <span class="stamina-pct">${Math.round(sq.stamina)}%</span>
+            </div>
+          `;
+
+          card.addEventListener('dragstart', (e) => {
+            if (sq.status === 'ARRESTED' || sq.status === 'CRISIS') {
+              e.preventDefault();
+              return;
+            }
+            state.draggingSquadId = sq.id;
+            e.dataTransfer.setData('text/plain', sq.id);
+          });
+
+          card.addEventListener('dragend', () => {
+            state.draggingSquadId = null;
+          });
+
+          card.addEventListener('click', () => {
+            if (sq.status === 'ARRESTED' || sq.status === 'CRISIS') return;
+            state.selectedSquadId = state.selectedSquadId === sq.id ? null : sq.id;
+            renderRoster();
+          });
+
+          elRosterList.appendChild(card);
+        });
+      }
+
+      function renderMapNodes() {
+        // Remove old node elements while keeping SVG and legend
+        elTacticalMap.querySelectorAll('.map-node').forEach((el) => el.remove());
+
+        const upgradeMult = 1 + (state.upgradeLevel - 1) * 0.25;
+        state.nodes.forEach((node) => {
+          const el = document.createElement('div');
+          el.className = `map-node ${node.crisis ? 'crisis-flash' : ''}`;
+          el.style.left = `${node.x}%`;
+          el.style.top = `${node.y}%`;
+
+          const occupant = node.squadId ? state.squads.find((s) => s.id === node.squadId) : null;
+          const effectiveRate = Math.round(node.profitPerSec * upgradeMult);
+
+          let slotHtml = `<div class="node-slot">Thả Tổ Vào Đây</div>`;
+          if (occupant) {
+            slotHtml = `
+              <div class="node-slot ${node.crisis ? 'crisis' : 'occupied'}">
+                <span>${occupant.name.split('•')[0].trim()}</span>
+                ${!node.crisis ? `<button class="btn-mini" data-recall="${occupant.id}">Rút</button>` : ''}
+              </div>
+            `;
+          }
+
+          const crisisHtml = node.crisis
+            ? `<div class="crisis-banner">TRUY QUÉT! BẤM XỬ LÝ (${node.crisis.remaining.toFixed(1)}s)</div>`
+            : '';
+
+          el.innerHTML = `
+            <div class="node-header">
+              <span class="node-title">${node.name}</span>
+              <span class="node-rate">+${effectiveRate.toLocaleString('vi-VN')}/s</span>
+            </div>
+            <div class="node-metrics">
+              <span>Khách: ${node.traffic}</span>
+              <span>Rủi ro: ${node.risk}</span>
+            </div>
+            ${slotHtml}
+            ${crisisHtml}
+          `;
+
+          el.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            el.classList.add('drag-over');
+          });
+
+          el.addEventListener('dragleave', () => {
+            el.classList.remove('drag-over');
+          });
+
+          el.addEventListener('drop', (e) => {
+            e.preventDefault();
+            el.classList.remove('drag-over');
+            const squadId = e.dataTransfer.getData('text/plain') || state.draggingSquadId;
+            if (squadId) deploySquadToNode(squadId, node.id);
+          });
+
+          el.addEventListener('click', (e) => {
+            const recallTarget = e.target.closest('[data-recall]');
+            if (recallTarget) {
+              e.stopPropagation();
+              recallSquad(recallTarget.getAttribute('data-recall'));
+              return;
+            }
+            if (node.crisis) {
+              openCrisisModal(node.id);
+              return;
+            }
+            if (state.selectedSquadId) {
+              deploySquadToNode(state.selectedSquadId, node.id);
+            }
+          });
+
+          elTacticalMap.appendChild(el);
+        });
+      }
+
+      function renderFeed() {
+        elEventFeed.innerHTML = '';
+        state.feed.forEach((item) => {
+          const row = document.createElement('div');
+          row.className = `feed-item ${item.type}`;
+          row.innerHTML = `<span class="feed-time">${item.time}</span>${item.message}`;
+          elEventFeed.appendChild(row);
+        });
+      }
+
+      function renderAll() {
+        renderHud();
+        renderRoster();
+        renderMapNodes();
+      }
+
+      // Bottom action handlers
+      elBtnUpgrade.addEventListener('click', () => {
+        const cost = getUpgradeCost();
+        if (state.money < cost) return;
+        state.money -= cost;
+        state.upgradeLevel += 1;
+        addFeed(`Nâng cấp mạng lưới lên Lv.${state.upgradeLevel}! Thu nhập tất cả điểm nóng +25%.`, 'profit');
+        renderAll();
+      });
+
+      elBtnBail.addEventListener('click', () => {
+        const arrested = state.squads.filter((s) => s.status === 'ARRESTED');
+        const cost = arrested.length * 40000;
+        if (arrested.length === 0 || state.money < cost) return;
+        state.money -= cost;
+        arrested.forEach((sq) => {
+          sq.status = 'IDLE';
+          sq.stamina = 70;
+          sq.nodeId = null;
+        });
+        state.heat = Math.max(0, state.heat - 10);
+        addFeed(`Đã đóng phạt ${fmtMoney(cost)} bảo lãnh ${arrested.length} tổ về an toàn.`, 'system');
+        renderAll();
+      });
+
+      elBtnPolicy.addEventListener('click', () => {
+        elPolicyOptions.innerHTML = '';
+        Object.values(POLICIES).forEach((pol) => {
+          const btn = document.createElement('button');
+          btn.className = `policy-option ${state.policy === pol.id ? 'active' : ''}`;
+          btn.innerHTML = `<div style="font-weight:900;font-size:0.9rem;">${pol.name}</div><div style="font-size:0.78rem;color:#5c5346;margin-top:2px;">${pol.desc}</div>`;
+          btn.addEventListener('click', () => {
+            state.policy = pol.id;
+            elPolicyModal.classList.remove('open');
+            addFeed(`Đã áp dụng chính sách: ${pol.name}.`, 'system');
+            renderAll();
+          });
+          elPolicyOptions.appendChild(btn);
+        });
+        elPolicyModal.classList.add('open');
+      });
+
+      elBtnClosePolicy.addEventListener('click', () => {
+        elPolicyModal.classList.remove('open');
+      });
+
+      elBtnBribe.addEventListener('click', () => resolveCrisis('BRIBE'));
+      elBtnFlee.addEventListener('click', () => resolveCrisis('FLEE'));
+
+      // 1-second simulation loop: Passive Income, Stamina Drain, Heat & Crisis countdown
+      let profitLogTicker = 0;
+      setInterval(() => {
+        const policy = POLICIES[state.policy];
+        const income = getPassiveIncomePerSec();
+        state.money += income;
+
+        // Heat calculation
+        let heatShift = policy.heatDelta;
+        state.nodes.forEach((n) => {
+          if (n.squadId && !n.crisis) {
+            const sq = state.squads.find((s) => s.id === n.squadId);
+            if (sq && sq.status === 'DEPLOYED') heatShift += n.heatPerSec;
+          }
+        });
+        if (heatShift === policy.heatDelta) heatShift -= 0.8;
+        state.heat = Math.max(0, Math.min(100, state.heat + heatShift));
+
+        // Stamina drain / recovery
+        state.squads.forEach((sq) => {
+          if (sq.status === 'DEPLOYED') {
+            sq.stamina = Math.max(0, sq.stamina - 2.2 * policy.staminaMult);
+            if (sq.stamina <= 0) {
+              const node = state.nodes.find((n) => n.id === sq.nodeId);
+              if (node) node.squadId = null;
+              sq.nodeId = null;
+              sq.status = 'IDLE';
+              addFeed(`${sq.name} hết thể lực, tự rút về nghỉ ngơi!`, 'system');
+            }
+          } else if (sq.status === 'IDLE') {
+            const recRate = state.policy === 'TEA_BREAK' ? 6.5 : 4.2;
+            sq.stamina = Math.min(100, sq.stamina + recRate);
+          }
+        });
+
+        // Update active crisis 5-second countdowns
+        state.nodes.forEach((node) => {
+          if (!node.crisis) return;
+          node.crisis.remaining = Math.max(0, node.crisis.remaining - 1);
+          if (state.activeCrisisNodeId === node.id) {
+            elCrisisTimer.textContent = `Còn ${node.crisis.remaining.toFixed(1)}s trước khi bị bắt giữ!`;
+          }
+          if (node.crisis.remaining <= 0) {
+            const sq = state.squads.find((s) => s.id === node.squadId);
+            if (sq) {
+              sq.status = 'ARRESTED';
+              sq.nodeId = null;
+            }
+            node.squadId = null;
+            node.crisis = null;
+            if (state.activeCrisisNodeId === node.id) closeCrisisModal();
+            addFeed(`TRỄ HẸN! ${sq ? sq.name : 'Đội bán hàng'} tại ${node.name} đã bị bắt (Arrested)!`, 'crisis');
+          }
+        });
+
+        profitLogTicker += 1;
+        if (profitLogTicker >= 6 && income > 0) {
+          profitLogTicker = 0;
+          const activeNodes = state.nodes.filter((n) => n.squadId && !n.crisis);
+          if (activeNodes.length > 0) {
+            const pick = activeNodes[Math.floor(Math.random() * activeNodes.length)];
+            const sq = state.squads.find((s) => s.id === pick.squadId);
+            if (sq) {
+              addFeed(`${sq.name} đang hốt bạc tại ${pick.name} (+${fmtMoney(pick.profitPerSec)}/s)!`, 'profit');
+            }
+          }
+        }
+
+        renderAll();
+      }, 1000);
+
+      // Every 10 seconds: chance for a deployed node to suffer a random crisis (5s window)
+      setInterval(() => {
+        const eligible = state.nodes.filter((n) => {
+          if (!n.squadId || n.crisis) return false;
+          const sq = state.squads.find((s) => s.id === n.squadId);
+          return sq && sq.status === 'DEPLOYED';
+        });
+        if (eligible.length === 0) return;
+
+        const chance = Math.min(0.85, 0.35 + state.heat / 200);
+        if (Math.random() <= chance) {
+          const target = eligible[Math.floor(Math.random() * eligible.length)];
+          const sq = state.squads.find((s) => s.id === target.squadId);
+          target.crisis = { remaining: 5.0 };
+          if (sq) sq.status = 'CRISIS';
+          addFeed(`BÁO ĐỘNG ĐỎ! ${sq ? sq.name : 'Tổ'} tại ${target.name} đang bị truy quét (còn 5s)!`, 'crisis');
+          renderAll();
+        }
+      }, 10000);
+
+      addFeed('Khởi động Bản Đồ Chiến Thuật! Kéo Tổ 3 & Tổ 4 vào điểm nóng để tối đa hóa lợi nhuận.', 'system');
+      renderAll();
+    })();
+  </script>
+</body>
+</html>

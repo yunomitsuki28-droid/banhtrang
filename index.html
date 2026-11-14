@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#181920" />
+    <title>Bánh Tráng Trộn Sinh Tồn: Đam Mê &amp; Trật Tự</title>
+    <meta
+      name="description"
+      content="Game hành động nấu ăn đường phố 2D hài hước: cắt bánh tráng, trộn topping, chiều lòng Ninja Lead &amp; Gen Z và đẩy xe chạy trốn Trật tự đô thị."
+    />
+    <meta property="og:title" content="Bánh Tráng Trộn Sinh Tồn: Đam Mê &amp; Trật Tự" />
+    <meta
+      property="og:description"
+      content="Game hành động nấu ăn đường phố 2D hài hước: cắt bánh tráng, trộn topping và sinh tồn trên vỉa hè Sài Gòn."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-[#181920] text-[#F8FAFC] overflow-hidden select-none touch-none">
+    <div id="root"></div>
+    <script>
+      (function lockMobileViewport() {
+        var isScrollableModal = function (target) {
+          if (!target || typeof target.closest !== 'function') return false;
+          var el = target.closest('.allow-touch-scroll');
+          return !!(el && el.scrollHeight > el.clientHeight);
+        };
+
+        var isInteractiveUiControl = function (target) {
+          if (!target || typeof target.closest !== 'function') return false;
+          return !!target.closest('button, a, input, select, textarea, [role="button"], [data-allow-touch]');
+        };
+
+        // Prevent iOS Safari pull-to-refresh, pinch-zoom, rubber-band scroll, and edge swipe-back
+        document.body.addEventListener(
+          'touchstart',
+          function (e) {
+            if (e.touches && e.touches.length > 1) {
+              e.preventDefault();
+              return;
+            }
+            var t = e.touches && e.touches[0];
+            if (t && (t.clientX <= 24 || t.clientX >= window.innerWidth - 24)) {
+              e.preventDefault();
+              return;
+            }
+            if (e.target && e.target.tagName === 'CANVAS') {
+              e.preventDefault();
+              return;
+            }
+            if (!isInteractiveUiControl(e.target) && !isScrollableModal(e.target)) {
+              e.preventDefault();
+            }
+          },
+          { passive: false }
+        );
+
+        document.body.addEventListener(
+          'touchmove',
+          function (e) {
+            if (e.touches && e.touches.length > 1) {
+              e.preventDefault();
+              return;
+            }
+            if (!isScrollableModal(e.target)) {
+              e.preventDefault();
+            }
+          },
+          { passive: false }
+        );
+
+        // Block iOS Safari proprietary pinch-zoom gestures
+        ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (evt) {
+          document.addEventListener(
+            evt,
+            function (e) {
+              e.preventDefault();
+            },
+            { passive: false }
+          );
+        });
+
+        // Attempt Portrait orientation lock on first interaction when supported
+        var tryLockPortrait = function () {
+          if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
+            window.screen.orientation.lock('portrait').catch(function () {});
+          }
+          window.removeEventListener('pointerdown', tryLockPortrait);
+          window.removeEventListener('touchstart', tryLockPortrait);
+        };
+        window.addEventListener('pointerdown', tryLockPortrait, { passive: true });
+        window.addEventListener('touchstart', tryLockPortrait, { passive: true });
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

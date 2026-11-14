@@ -1,0 +1,8 @@
+{
+  "name": "Bánh Tráng Trộn Sinh Tồn: Đam Mê & Trật Tự",
+  "description": "Game hành động nấu ăn đường phố 2D hài hước: cắt bánh tráng, pha chế gia vị, phục vụ khách hàng bất ổn và đẩy xe chạy trốn Trật tự đô thị.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bánh Tráng Master — 2D Cooking Simulator</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-alt: #273449;
+      --border: #334155;
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #f59e0b;
+      --accent-hover: #fbbf24;
+      --good: #10b981;
+      --bad: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 16px 24px;
+      gap: 12px;
+    }
+
+    .app-frame {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Clean 3-zone Top Header */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 18px;
+    }
+
+    .brand {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: #fef3c7;
+      white-space: nowrap;
+    }
+
+    .hud-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      font-variant-numeric: tabular-nums;
+      color: #cbd5e1;
+    }
+
+    .sep {
+      color: #475569;
+    }
+
+    .metric-strong {
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .buff-text {
+      font-weight: 700;
+    }
+    .buff-good { color: #34d399; }
+    .buff-bad { color: #f87171; }
+    .buff-idle { color: #94a3b8; }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-ghost {
+      background: var(--surface-alt);
+      color: var(--ink);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-ghost:hover {
+      background: #334155;
+    }
+
+    /* Segmented Mechanic / Gesture Switcher */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .mode-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: var(--surface);
+      padding: 5px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      border-radius: 7px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #111827;
+    }
+
+    .btn-reset {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-reset:hover {
+      background: #475569;
+    }
+
+    /* Canvas Stage */
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      background: #0b1120;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1040 / 540;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    /* Feedback Strip & Roadmap Footer */
+    .feedback-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .feedback-bar[data-tone="good"] {
+      border-color: #10b981;
+      color: #6ee7b7;
+    }
+
+    .feedback-bar[data-tone="bad"] {
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    .feedback-bar[data-tone="warn"] {
+      border-color: #f59e0b;
+      color: #fde68a;
+    }
+
+    .module-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 2px 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-frame">
+    <header class="top-bar">
+      <div class="brand">Bánh Tráng Master</div>
+      <div class="hud-metrics">
+        <span id="hudClock" class="metric-strong">Ngày 1 · 08:00 AM</span>
+        <span class="sep" aria-hidden="true">/</span>
+        <span id="hudMoney" class="metric-strong" style="color: #fde047;">50,000đ</span>
+        <span class="sep" aria-hidden="true">/</span>
+        <span id="hudRep">4.5 ★ · 0 đơn</span>
+        <span class="sep" aria-hidden="true">/</span>
+        <span id="hudBuff" class="buff-text buff-idle">Chưa Nấu Sốt Sáng</span>
+      </div>
+      <div class="header-actions">
+        <button id="btnMute" class="btn-ghost" type="button">Âm Thanh: Bật</button>
+        <a href="/" class="btn-ghost">Về Quán Chính</a>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <nav class="mode-tabs" aria-label="Chọn bài test thao tác">
+        <button class="tab-btn active" type="button" data-mode="SAUCE">1. Nồi Sốt Sáng (30s)</button>
+        <button class="tab-btn" type="button" data-mode="TRON">2. Bánh Tráng Trộn (Lắc)</button>
+        <button class="tab-btn" type="button" data-mode="CUON">3. Bánh Tráng Cuốn (Vuốt + Cắt)</button>
+        <button class="tab-btn" type="button" data-mode="NUONG">4. Bánh Tráng Nướng (Quạt + Xoay)</button>
+      </nav>
+      <button id="btnResetMode" class="btn-reset" type="button">Làm Lại Màn Này</button>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="gameCanvas" width="1040" height="540"></canvas>
+    </div>
+
+    <div id="hudFeedback" class="feedback-bar" data-tone="neutral">
+      Mechanic 2: Nồi Sốt Sáng (30s) — Rót đủ Nước Dầm Bò, Sa Tế, Nước Me đúng vạch mục tiêu.
+    </div>
+
+    <div class="module-status">
+      <span>Đã kích hoạt: Canvas/UI · Mechanic 1 (Trộn / Cuốn / Nướng) · Mechanic 2 (Nồi Sốt 30s)</span>
+      <span aria-hidden="true">·</span>
+      <span>Sẵn sàng mở rộng: Rush Hour 5:00 PM · Ruồi & Mưa Bất Chợt · Đóng Gói Level 1–3</span>
+    </div>
+  </div>
+
+  <script type="module" src="/banh-trang-master/main.js"></script>
+</body>
+</html>
